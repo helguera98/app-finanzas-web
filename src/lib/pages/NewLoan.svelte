@@ -1,7 +1,10 @@
 <script>
-    import { createEventDispatcher } from "svelte";
+    import { createEventDispatcher, onMount } from "svelte";
+    import { api } from "../api";
+    import TopHeader from "../components/TopHeader.svelte";
     const dispatch = createEventDispatcher();
 
+    let loading = false;
     let debtType = "loan"; // "loan" or "card"
     let loanName = "";
     let principalAmount = "";
@@ -9,16 +12,33 @@
     let termMonths = "";
     let minPayment = "";
 
-    function handleSave() {
-        dispatch("save", {
-            debtType,
-            loanName,
-            principalAmount,
-            annualRate,
-            termMonths,
-            minPayment,
-        });
-        dispatch("navigate", { tab: "loans" });
+    async function handleSave() {
+        if (!loanName.trim() || loading) return;
+
+        loading = true;
+        try {
+            const loanData = {
+                lender: loanName,
+                amount: parseFloat(principalAmount) || 0,
+                remaining_balance: parseFloat(principalAmount) || 0,
+                due_date: new Date().toISOString().split("T")[0],
+                interest_rate: parseFloat(annualRate) || 0,
+                status: "active",
+                // New specialized fields
+                debt_type: debtType,
+                term_months:
+                    debtType === "loan" ? parseInt(termMonths) || null : null,
+                min_payment: parseFloat(minPayment) || 0,
+            };
+
+            await api.createLoan(loanData);
+            dispatch("navigate", { tab: "loans" });
+        } catch (e) {
+            console.error("Error saving loan:", e);
+            alert("Error al guardar deuda: " + e.message);
+        } finally {
+            loading = false;
+        }
     }
 
     function close() {
@@ -29,19 +49,7 @@
 <div
     class="new-loan-page bg-background-dark font-display text-slate-100 h-[100dvh] w-full flex flex-col relative overflow-y-auto hide-scrollbar"
 >
-    <!-- Header Navigation -->
-    <header
-        class="flex-none flex items-center justify-between p-6 sticky top-0 bg-background-dark/80 backdrop-blur-md z-50 border-b border-primary/10"
-    >
-        <button
-            on:click={close}
-            class="flex items-center justify-center size-10 rounded-full bg-slate-800/50 hover:bg-primary/20 transition-colors text-slate-100"
-        >
-            <span class="material-symbols-outlined">arrow_back</span>
-        </button>
-        <h1 class="text-lg font-bold tracking-tight">Nueva Deuda</h1>
-        <div class="size-10"></div>
-    </header>
+    <TopHeader title="Add New Debt" on:back={close} />
 
     <main
         class="flex-1 max-w-md mx-auto w-full px-6 py-8 flex flex-col gap-8 pb-32"
@@ -152,32 +160,38 @@
             </div>
 
             <!-- Term & Min Payment Row -->
-            <div class="grid grid-cols-2 gap-4">
-                <div class="space-y-2">
-                    <label
-                        for="term-months"
-                        class="block text-xs font-semibold uppercase tracking-wider text-slate-500 ml-4"
-                        >Plazo (Meses)</label
-                    >
-                    <div class="relative">
-                        <span
-                            class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 text-xl"
-                            >event_repeat</span
+            <div
+                class="grid {debtType === 'loan'
+                    ? 'grid-cols-2'
+                    : 'grid-cols-1'} gap-4"
+            >
+                {#if debtType === "loan"}
+                    <div class="space-y-2">
+                        <label
+                            for="term-months"
+                            class="block text-xs font-semibold uppercase tracking-wider text-slate-500 ml-4"
+                            >Plazo (Meses)</label
                         >
-                        <input
-                            id="term-months"
-                            bind:value={termMonths}
-                            class="w-full h-14 pl-12 pr-4 bg-slate-900/50 border border-slate-800 rounded-full focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all outline-none text-slate-100 placeholder:text-slate-600 no-arrows"
-                            placeholder="12"
-                            type="number"
-                        />
+                        <div class="relative">
+                            <span
+                                class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 text-xl"
+                                >event_repeat</span
+                            >
+                            <input
+                                id="term-months"
+                                bind:value={termMonths}
+                                class="w-full h-14 pl-12 pr-4 bg-slate-900/50 border border-slate-800 rounded-full focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all outline-none text-slate-100 placeholder:text-slate-600 no-arrows"
+                                placeholder="12"
+                                type="number"
+                            />
+                        </div>
                     </div>
-                </div>
+                {/if}
                 <div class="space-y-2">
                     <label
                         for="min-payment"
                         class="block text-xs font-semibold uppercase tracking-wider text-slate-500 ml-4"
-                        >Pago Mínimo</label
+                        >Pago Mínimo Sugerido</label
                     >
                     <div class="relative">
                         <span
@@ -213,11 +227,14 @@
 
             <!-- CTA Button -->
             <button
-                class="w-full h-16 gold-gradient rounded-full flex items-center justify-center gap-2 text-slate-950 font-bold text-lg glow-gold hover:scale-[1.02] active:scale-[0.98] transition-all"
+                class="w-full h-16 gold-gradient rounded-full flex items-center justify-center gap-2 text-slate-950 font-bold text-lg glow-gold hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 type="submit"
+                disabled={loading}
             >
-                <span class="material-symbols-outlined">add_task</span>
-                Guardar Registro
+                <span class="material-symbols-outlined"
+                    >{loading ? "sync" : "add_task"}</span
+                >
+                {loading ? "GUARDANDO..." : "Guardar Registro"}
             </button>
         </form>
     </main>

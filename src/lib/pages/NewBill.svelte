@@ -1,31 +1,52 @@
 <script>
-    import { createEventDispatcher } from "svelte";
+    import { createEventDispatcher, onMount } from "svelte";
+    import { api } from "../api";
+    import TopHeader from "../components/TopHeader.svelte";
     const dispatch = createEventDispatcher();
 
+    let loading = false;
     let billName = "";
     let amount = "0.00";
-    let selectedCategory = "Hogar";
+    let selectedCategoryName = "Hogar";
     let paymentDay = 15;
     let isFixed = true;
 
     const categories = [
-        { id: "hogar", name: "Hogar", icon: "home" },
-        { id: "servicios", name: "Servicios", icon: "bolt" },
-        { id: "ocio", name: "Ocio", icon: "subscriptions" },
-        { id: "otros", name: "Otros", icon: "more_horiz" },
+        { id: 1, name: "Hogar", icon: "home" },
+        { id: 2, name: "Servicios", icon: "bolt" },
+        { id: 3, name: "Ocio", icon: "subscriptions" },
+        { id: 4, name: "Otros", icon: "more_horiz" },
     ];
 
     const days = Array.from({ length: 31 }, (_, i) => i + 1);
 
-    function handleSave() {
-        dispatch("save", {
-            billName,
-            amount,
-            selectedCategory,
-            paymentDay,
-            isFixed,
-        });
-        dispatch("navigate", "bills");
+    async function handleSave() {
+        if (!billName.trim() || loading) return;
+
+        loading = true;
+        try {
+            const billData = {
+                name: billName,
+                amount: parseFloat(amount),
+                due_date: new Date(
+                    new Date().getFullYear(),
+                    new Date().getMonth(),
+                    paymentDay,
+                )
+                    .toISOString()
+                    .split("T")[0],
+                category_id: null, // Optionally link to a real category ID here if needed
+                frequency: isFixed ? "monthly" : "variable",
+            };
+
+            await api.createBill(billData);
+            dispatch("navigate", "bills");
+        } catch (e) {
+            console.error("Error saving bill:", e);
+            alert("Error al guardar factura: " + e.message);
+        } finally {
+            loading = false;
+        }
     }
 
     function close() {
@@ -36,19 +57,7 @@
 <div
     class="new-bill-page bg-background-dark font-display text-slate-100 h-[100dvh] w-full flex flex-col relative overflow-y-auto hide-scrollbar"
 >
-    <!-- Header Navigation -->
-    <header
-        class="flex-none flex items-center justify-between px-6 py-6 sticky top-0 bg-background-dark/80 backdrop-blur-md z-50"
-    >
-        <button
-            on:click={close}
-            class="flex items-center justify-center size-10 rounded-full bg-slate-800 text-slate-400 hover:text-white transition-colors"
-        >
-            <span class="material-symbols-outlined">close</span>
-        </button>
-        <h1 class="text-xl font-bold tracking-tight">Nueva Factura</h1>
-        <div class="size-10"></div>
-    </header>
+    <TopHeader title="Recurring Bill" on:back={close} />
 
     <main class="flex-1 px-6 pb-40">
         <form
@@ -107,12 +116,12 @@
                     {#each categories as cat}
                         <button
                             type="button"
-                            on:click={() => (selectedCategory = cat.name)}
+                            on:click={() => (selectedCategoryName = cat.name)}
                             class="flex flex-col items-center gap-2 group"
                         >
                             <div
                                 class="size-14 rounded-full flex items-center justify-center border-2 transition-all
-                                {selectedCategory === cat.name
+                                {selectedCategoryName === cat.name
                                     ? 'bg-primary/10 text-primary border-primary ring-4 ring-primary/20'
                                     : 'bg-slate-800 text-slate-500 border-transparent hover:border-slate-600'}"
                             >
@@ -121,7 +130,7 @@
                                 >
                             </div>
                             <span
-                                class="text-xs font-medium {selectedCategory ===
+                                class="text-xs font-medium {selectedCategoryName ===
                                 cat.name
                                     ? 'text-primary'
                                     : 'text-slate-500'}">{cat.name}</span
@@ -205,10 +214,13 @@
         <div class="max-w-lg mx-auto">
             <button
                 on:click={handleSave}
-                class="w-full bg-gradient-to-r from-gold to-[#B8860B] hover:brightness-110 text-background-dark font-black py-5 rounded-full shadow-xl shadow-gold/20 flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
+                disabled={loading}
+                class="w-full bg-gradient-to-r from-gold to-[#B8860B] hover:brightness-110 text-background-dark font-black py-5 rounded-full shadow-xl shadow-gold/20 flex items-center justify-center gap-2 transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
             >
-                <span class="material-symbols-outlined">check_circle</span>
-                GUARDAR FACTURA
+                <span class="material-symbols-outlined"
+                    >{loading ? "sync" : "check_circle"}</span
+                >
+                {loading ? "GUARDANDO..." : "GUARDAR FACTURA"}
             </button>
         </div>
     </footer>

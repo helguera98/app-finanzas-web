@@ -1,31 +1,45 @@
 <script>
+    import { createEventDispatcher, onMount } from "svelte";
+    import { api } from "../api";
+    import TopHeader from "../components/TopHeader.svelte";
+    const dispatch = createEventDispatcher();
+
     let activePeriod = "Mes";
+    let transactions = [];
+    let categories = [];
+    let loading = true;
+
+    let stats = {
+        total_income: 0,
+        total_expenses: 0,
+        savings_rate: 0,
+        category_breakdown: [],
+    };
+
+    onMount(async () => {
+        try {
+            stats = await api.getSummary();
+        } catch (e) {
+            console.error("Error loading insights:", e);
+        } finally {
+            loading = false;
+        }
+    });
+
+    function goBack() {
+        dispatch("navigate", { tab: "home" });
+    }
+
+    // Client-side calculateStats removed as we now use backend analysis
 </script>
 
 <main class="main-content hide-scrollbar bg-background-dark">
-    <!-- Header -->
-    <header
-        class="sticky top-0 z-10 flex items-center justify-between p-6 bg-background-dark/80 backdrop-blur-md"
-    >
-        <button
-            class="flex items-center justify-center size-10 rounded-full hover:bg-slate-800 transition-colors text-slate-100"
-        >
-            <span class="material-symbols-outlined">arrow_back</span>
-        </button>
-        <h1 class="text-xl font-bold tracking-tight text-slate-100">
-            Insights
-        </h1>
-        <button
-            class="flex items-center justify-center size-10 rounded-full hover:bg-slate-800 transition-colors text-slate-100"
-        >
-            <span class="material-symbols-outlined">share</span>
-        </button>
-    </header>
+    <TopHeader title="Financial Insights" on:back={goBack} rightIcon="share" />
 
     <div class="px-6 space-y-8 pb-10 max-w-lg mx-auto">
         <!-- Time Period Selector -->
         <div
-            class="flex p-1 bg-card-dark rounded-full border border-border-dark"
+            class="flex p-1.5 bg-card-dark rounded-full border border-border-dark mt-6 mb-2 shadow-inner"
         >
             {#each ["Semana", "Mes", "Año"] as period}
                 <button
@@ -40,345 +54,212 @@
             {/each}
         </div>
 
-        <!-- Hero Doughnut Chart Section -->
-        <section class="flex flex-col items-center">
-            <div class="chart-container size-64 relative">
-                <!-- SVG Semi-Doughnut Representation -->
-                <svg class="size-full -rotate-90" viewbox="0 0 100 100">
-                    <circle
-                        class="text-slate-800"
-                        cx="50"
-                        cy="50"
-                        fill="transparent"
-                        r="40"
-                        stroke="currentColor"
-                        stroke-width="12"
-                    ></circle>
-                    <!-- Gold Slice -->
-                    <circle
-                        cx="50"
-                        cy="50"
-                        fill="transparent"
-                        r="40"
-                        stroke="url(#goldGradient)"
-                        stroke-dasharray="251.2"
-                        stroke-dashoffset="62.8"
-                        stroke-linecap="round"
-                        stroke-width="12"
-                    ></circle>
-                    <!-- Definitions for Gradient -->
-                    <defs>
-                        <linearGradient
-                            id="goldGradient"
-                            x1="0%"
-                            x2="100%"
-                            y1="0%"
-                            y2="0%"
-                        >
-                            <stop
-                                offset="0%"
-                                style="stop-color:#BF953F;stop-opacity:1"
-                            ></stop>
-                            <stop
-                                offset="50%"
-                                style="stop-color:#FCF6BA;stop-opacity:1"
-                            ></stop>
-                            <stop
-                                offset="100%"
-                                style="stop-color:#AA771C;stop-opacity:1"
-                            ></stop>
-                        </linearGradient>
-                    </defs>
-                </svg>
-                <div
-                    class="absolute flex flex-col items-center justify-center text-center"
+        {#if loading}
+            <div class="flex items-center justify-center h-64">
+                <p
+                    class="text-slate-500 animate-pulse font-black uppercase tracking-widest text-xs"
                 >
-                    <span
-                        class="text-[10px] uppercase tracking-widest text-slate-500 font-bold"
-                        >Total Expenses</span
+                    Analizando tus finanzas...
+                </p>
+            </div>
+        {:else}
+            <!-- Hero Doughnut Chart Section -->
+            <section class="flex flex-col items-center">
+                <div class="chart-container size-64 relative">
+                    <!-- SVG Semi-Doughnut Representation -->
+                    <svg class="size-full -rotate-90" viewbox="0 0 100 100">
+                        <circle
+                            class="text-slate-800"
+                            cx="50"
+                            cy="50"
+                            fill="transparent"
+                            r="40"
+                            stroke="currentColor"
+                            stroke-width="12"
+                        ></circle>
+                        <!-- Gold Slice represents expenses ratio if we wanted multiple colors we'd need more logic, 
+                             keeping it simple with one main slice for now -->
+                        <circle
+                            cx="50"
+                            cy="50"
+                            fill="transparent"
+                            r="40"
+                            stroke="url(#goldGradient)"
+                            stroke-dasharray="251.2"
+                            stroke-dashoffset={251.2 -
+                                251.2 *
+                                    (stats.total_expenses /
+                                        (stats.total_income ||
+                                            stats.total_expenses ||
+                                            1))}
+                            stroke-linecap="round"
+                            stroke-width="12"
+                        ></circle>
+                        <!-- Definitions for Gradient -->
+                        <defs>
+                            <linearGradient
+                                id="goldGradient"
+                                x1="0%"
+                                x2="100%"
+                                y1="0%"
+                                y2="0%"
+                            >
+                                <stop
+                                    offset="0%"
+                                    style="stop-color:#BF953F;stop-opacity:1"
+                                ></stop>
+                                <stop
+                                    offset="50%"
+                                    style="stop-color:#FCF6BA;stop-opacity:1"
+                                ></stop>
+                                <stop
+                                    offset="100%"
+                                    style="stop-color:#AA771C;stop-opacity:1"
+                                ></stop>
+                            </linearGradient>
+                        </defs>
+                    </svg>
+                    <div
+                        class="absolute flex flex-col items-center justify-center text-center"
                     >
-                    <span class="text-3xl font-black mt-1 text-slate-100"
-                        >$4,250.00</span
-                    >
-                    <div class="flex items-center gap-1 mt-1 text-accent-mint">
-                        <span class="material-symbols-outlined text-sm"
-                            >trending_down</span
+                        <span
+                            class="text-[10px] uppercase tracking-widest text-slate-500 font-bold"
+                            >Gastos Totales</span
                         >
-                        <span class="text-[10px] font-bold"
-                            >12% vs last {activePeriod.toLowerCase()}</span
+                        <span class="text-3xl font-black mt-1 text-slate-100"
+                            >${stats.total_expenses.toLocaleString()}</span
                         >
+                        <div
+                            class="flex items-center gap-1 mt-1 text-accent-mint"
+                        >
+                            <span class="material-symbols-outlined text-sm"
+                                >trending_down</span
+                            >
+                            <span class="text-[10px] font-bold"
+                                >En tiempo real</span
+                            >
+                        </div>
                     </div>
                 </div>
-            </div>
-            <!-- Chart Legend -->
-            <div class="flex flex-wrap justify-center gap-6 mt-4">
-                <div class="flex items-center gap-2">
-                    <div
-                        class="size-2 rounded-full bg-primary shadow-sm shadow-primary/40"
-                    ></div>
-                    <span
-                        class="text-[10px] font-bold text-slate-500 uppercase tracking-widest"
-                        >Housing</span
-                    >
-                </div>
-                <div class="flex items-center gap-2">
-                    <div class="size-2 rounded-full bg-slate-500"></div>
-                    <span
-                        class="text-[10px] font-bold text-slate-500 uppercase tracking-widest"
-                        >Food</span
-                    >
-                </div>
-                <div class="flex items-center gap-2">
-                    <div class="size-2 rounded-full bg-slate-700"></div>
-                    <span
-                        class="text-[10px] font-bold text-slate-500 uppercase tracking-widest"
-                        >Fun</span
-                    >
-                </div>
-            </div>
-        </section>
+            </section>
 
-        <!-- Summary Cards -->
-        <div class="grid grid-cols-2 gap-4">
-            <div
-                class="bg-card-dark p-6 rounded-xl border border-primary/20 shadow-xl"
-            >
-                <div class="flex items-center gap-2 mb-3 text-slate-500">
-                    <span class="material-symbols-outlined text-lg"
-                        >payments</span
-                    >
-                    <span class="text-[9px] font-bold uppercase tracking-widest"
-                        >Income</span
-                    >
-                </div>
-                <p class="text-2xl font-black text-accent-mint">$6,840</p>
+            <!-- Summary Cards -->
+            <div class="grid grid-cols-2 gap-4">
                 <div
-                    class="mt-4 h-1.5 w-full bg-slate-800 rounded-full overflow-hidden"
+                    class="bg-card-dark p-6 rounded-xl border border-primary/20 shadow-xl"
                 >
+                    <div class="flex items-center gap-2 mb-3 text-slate-500">
+                        <span class="material-symbols-outlined text-lg"
+                            >payments</span
+                        >
+                        <span
+                            class="text-[9px] font-bold uppercase tracking-widest"
+                            >Ingresos</span
+                        >
+                    </div>
+                    <p class="text-2xl font-black text-accent-mint">
+                        ${stats.total_income.toLocaleString()}
+                    </p>
                     <div
-                        class="h-full bg-accent-mint rounded-full"
-                        style="width: 75%"
-                    ></div>
+                        class="mt-4 h-1.5 w-full bg-slate-800 rounded-full overflow-hidden"
+                    >
+                        <div
+                            class="h-full bg-accent-mint rounded-full"
+                            style="width: 100%"
+                        ></div>
+                    </div>
+                </div>
+                <div
+                    class="bg-card-dark p-6 rounded-xl border border-primary/20 shadow-xl"
+                >
+                    <div class="flex items-center gap-2 mb-3 text-slate-500">
+                        <span class="material-symbols-outlined text-lg"
+                            >savings</span
+                        >
+                        <span
+                            class="text-[9px] font-bold uppercase tracking-widest"
+                            >Ahorro Neto</span
+                        >
+                    </div>
+                    <p class="text-2xl font-black gold-gradient-text">
+                        {stats.savings_rate.toFixed(1)}%
+                    </p>
+                    <div
+                        class="mt-4 h-1.5 w-full bg-slate-800 rounded-full overflow-hidden"
+                    >
+                        <div
+                            class="h-full bg-primary rounded-full shadow-sm shadow-primary/40"
+                            style="width: {Math.max(
+                                0,
+                                Math.min(100, stats.savings_rate),
+                            )}%"
+                        ></div>
+                    </div>
                 </div>
             </div>
-            <div
-                class="bg-card-dark p-6 rounded-xl border border-primary/20 shadow-xl"
-            >
-                <div class="flex items-center gap-2 mb-3 text-slate-500">
-                    <span class="material-symbols-outlined text-lg"
-                        >savings</span
-                    >
-                    <span class="text-[9px] font-bold uppercase tracking-widest"
-                        >Net Savings</span
-                    >
-                </div>
-                <p class="text-2xl font-black gold-gradient-text">38.4%</p>
-                <div
-                    class="mt-4 h-1.5 w-full bg-slate-800 rounded-full overflow-hidden"
-                >
-                    <div
-                        class="h-full bg-primary rounded-full shadow-sm shadow-primary/40"
-                        style="width: 38.4%"
-                    ></div>
-                </div>
-            </div>
-        </div>
 
-        <!-- Trend Chart Section -->
-        <section class="space-y-4">
-            <div class="flex items-center justify-between">
-                <h3 class="font-bold text-lg text-slate-100">Monthly Trend</h3>
-                <span
-                    class="text-xs font-bold text-slate-500 uppercase tracking-widest"
-                    >Last 6 Months</span
-                >
-            </div>
-            <div
-                class="bg-card-dark p-8 rounded-xl border border-primary/10 h-56 relative overflow-hidden shadow-2xl"
-            >
-                <!-- Vector Line Chart Simulation -->
-                <svg
-                    class="absolute inset-0 w-full h-full p-4 overflow-visible"
-                    preserveaspectratio="none"
-                >
-                    <path
-                        d="M0,80 Q50,70 100,90 T200,40 T300,60 T400,20"
-                        fill="none"
-                        stroke="url(#goldGradientTrend)"
-                        stroke-width="3"
-                        vector-effect="non-scaling-stroke"
-                    ></path>
-                    <path
-                        d="M0,80 Q50,70 100,90 T200,40 T300,60 T400,20 V120 H0 Z"
-                        fill="url(#goldFill)"
-                        opacity="0.1"
-                        vector-effect="non-scaling-stroke"
-                    ></path>
-                    <defs>
-                        <linearGradient
-                            id="goldGradientTrend"
-                            x1="0%"
-                            x2="100%"
-                            y1="0%"
-                            y2="0%"
+            <!-- Category Breakdown List -->
+            <section class="space-y-4">
+                <h3 class="font-bold text-lg text-slate-100">
+                    Desglose por Categoría
+                </h3>
+                <div class="space-y-4">
+                    {#each stats.category_breakdown as cat}
+                        <div
+                            class="flex items-center gap-4 bg-card-dark p-5 rounded-xl border border-primary/10 shadow-lg"
                         >
-                            <stop offset="0%" style="stop-color:#BF953F;"
-                            ></stop>
-                            <stop offset="100%" style="stop-color:#AA771C;"
-                            ></stop>
-                        </linearGradient>
-                        <linearGradient
-                            id="goldFill"
-                            x1="0"
-                            x2="0"
-                            y1="0"
-                            y2="1"
-                        >
-                            <stop offset="0%" stop-color="#D4AF37"></stop>
-                            <stop
-                                offset="100%"
-                                stop-color="#D4AF37"
-                                stop-opacity="0"
-                            ></stop>
-                        </linearGradient>
-                    </defs>
-                    <!-- Points -->
-                    <circle cx="0%" cy="80%" fill="#D4AF37" r="3"></circle>
-                    <circle cx="20%" cy="75%" fill="#D4AF37" r="3"></circle>
-                    <circle cx="40%" cy="85%" fill="#D4AF37" r="3"></circle>
-                    <circle cx="60%" cy="40%" fill="#D4AF37" r="3"></circle>
-                    <circle cx="80%" cy="60%" fill="#D4AF37" r="3"></circle>
-                    <circle
-                        class="animate-pulse"
-                        cx="100%"
-                        cy="20%"
-                        fill="#D4AF37"
-                        r="5"
-                        stroke="white"
-                        stroke-width="1"
-                    ></circle>
-                </svg>
-                <div
-                    class="absolute bottom-6 left-0 right-0 flex justify-between px-8 text-[9px] text-slate-500 uppercase font-black tracking-widest"
-                >
-                    <span>Jan</span>
-                    <span>Feb</span>
-                    <span>Mar</span>
-                    <span>Apr</span>
-                    <span>May</span>
-                    <span>Jun</span>
-                </div>
-            </div>
-        </section>
-
-        <!-- Category Breakdown List -->
-        <section class="space-y-4">
-            <h3 class="font-bold text-lg text-slate-100">Category Breakdown</h3>
-            <div class="space-y-4">
-                <!-- Item 1 -->
-                <div
-                    class="flex items-center gap-4 bg-card-dark p-5 rounded-xl border border-primary/10 shadow-lg"
-                >
-                    <div
-                        class="flex items-center justify-center size-12 rounded-full bg-primary/10 text-primary"
-                    >
-                        <span class="material-symbols-outlined">home</span>
-                    </div>
-                    <div class="flex-1">
-                        <div class="flex justify-between items-center mb-1">
-                            <span class="font-bold text-sm text-slate-200"
-                                >Housing</span
-                            >
-                            <span class="font-black text-sm text-slate-100"
-                                >$2,100.00</span
-                            >
-                        </div>
-                        <div class="flex items-center gap-3">
                             <div
-                                class="flex-1 h-1.5 bg-slate-800 rounded-full overflow-hidden"
+                                class="flex items-center justify-center size-12 rounded-full bg-primary/10 text-primary"
+                                style="color: {cat.color}; background-color: {cat.color}20"
                             >
-                                <div
-                                    class="h-full bg-primary rounded-full shadow-sm shadow-primary/40"
-                                    style="width: 49%"
-                                ></div>
+                                <span class="material-symbols-outlined"
+                                    >{cat.icon}</span
+                                >
                             </div>
-                            <span class="text-[10px] font-black text-slate-500"
-                                >49%</span
-                            >
+                            <div class="flex-1">
+                                <div
+                                    class="flex justify-between items-center mb-1"
+                                >
+                                    <span
+                                        class="font-bold text-sm text-slate-200"
+                                        >{cat.name}</span
+                                    >
+                                    <span
+                                        class="font-black text-sm text-slate-100"
+                                        >${cat.amount.toLocaleString()}</span
+                                    >
+                                </div>
+                                <div class="flex items-center gap-3">
+                                    <div
+                                        class="flex-1 h-1.5 bg-slate-800 rounded-full overflow-hidden"
+                                    >
+                                        <div
+                                            class="h-full bg-primary rounded-full shadow-sm shadow-primary/40"
+                                            style="width: {cat.percentage}%; background-color: {cat.color}"
+                                        ></div>
+                                    </div>
+                                    <span
+                                        class="text-[10px] font-black text-slate-500"
+                                        >{cat.percentage.toFixed(0)}%</span
+                                    >
+                                </div>
+                            </div>
                         </div>
-                    </div>
-                </div>
-                <!-- Item 2 -->
-                <div
-                    class="flex items-center gap-4 bg-card-dark p-5 rounded-xl border border-primary/10 shadow-lg"
-                >
-                    <div
-                        class="flex items-center justify-center size-12 rounded-full bg-slate-500/10 text-slate-500"
-                    >
-                        <span class="material-symbols-outlined">restaurant</span
+                    {/each}
+                    {#if stats.category_breakdown.length === 0}
+                        <div
+                            class="p-10 text-center border border-dashed border-slate-800 rounded-2xl"
                         >
-                    </div>
-                    <div class="flex-1">
-                        <div class="flex justify-between items-center mb-1">
-                            <span class="font-bold text-sm text-slate-200"
-                                >Food</span
+                            <p
+                                class="text-xs text-slate-600 font-bold uppercase tracking-widest"
                             >
-                            <span class="font-black text-sm text-slate-100"
-                                >$850.40</span
-                            >
+                                No hay gastos registrados
+                            </p>
                         </div>
-                        <div class="flex items-center gap-3">
-                            <div
-                                class="flex-1 h-1.5 bg-slate-800 rounded-full overflow-hidden"
-                            >
-                                <div
-                                    class="h-full bg-slate-500 rounded-full"
-                                    style="width: 20%"
-                                ></div>
-                            </div>
-                            <span class="text-[10px] font-black text-slate-500"
-                                >20%</span
-                            >
-                        </div>
-                    </div>
+                    {/if}
                 </div>
-                <!-- Item 3 -->
-                <div
-                    class="flex items-center gap-4 bg-card-dark p-5 rounded-xl border border-primary/10 shadow-lg"
-                >
-                    <div
-                        class="flex items-center justify-center size-12 rounded-full bg-slate-700/10 text-slate-700"
-                    >
-                        <span class="material-symbols-outlined"
-                            >confirmation_number</span
-                        >
-                    </div>
-                    <div class="flex-1">
-                        <div class="flex justify-between items-center mb-1">
-                            <span class="font-bold text-sm text-slate-200"
-                                >Fun</span
-                            >
-                            <span class="font-black text-sm text-slate-100"
-                                >$420.00</span
-                            >
-                        </div>
-                        <div class="flex items-center gap-3">
-                            <div
-                                class="flex-1 h-1.5 bg-slate-800 rounded-full overflow-hidden"
-                            >
-                                <div
-                                    class="h-full bg-slate-700 rounded-full"
-                                    style="width: 10%"
-                                ></div>
-                            </div>
-                            <span class="text-[10px] font-black text-slate-500"
-                                >10%</span
-                            >
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
+            </section>
+        {/if}
     </div>
 </main>
 

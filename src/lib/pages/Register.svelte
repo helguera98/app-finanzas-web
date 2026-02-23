@@ -1,5 +1,6 @@
 <script>
     import { createEventDispatcher } from "svelte";
+    import { api } from "../api";
     const dispatch = createEventDispatcher();
 
     let fullName = "";
@@ -8,10 +9,34 @@
     let confirmPassword = "";
     let showPassword = false;
     let agreeTerms = false;
+    let loading = false;
+    let error = "";
 
-    function handleRegister() {
-        // Mock registration -> go to login or directly to app
-        dispatch("registered");
+    async function handleRegister() {
+        if (!email || !password || !fullName) {
+            error = "All fields are required";
+            return;
+        }
+        if (password !== confirmPassword) {
+            error = "Passwords do not match";
+            return;
+        }
+
+        loading = true;
+        error = "";
+
+        try {
+            await api.register({
+                email,
+                password,
+                full_name: fullName,
+            });
+            dispatch("registered");
+        } catch (e) {
+            error = e.message || "Registration failed";
+        } finally {
+            loading = false;
+        }
     }
 
     function goToLogin() {
@@ -51,7 +76,7 @@
         <!-- Header Section -->
         <header class="text-center mb-6">
             <h1
-                class="text-primary text-4xl font-black tracking-tighter mb-2 italic uppercase"
+                class="gold-gradient-text text-4xl font-black tracking-tighter mb-2 italic uppercase"
             >
                 Create Account
             </h1>
@@ -64,6 +89,14 @@
 
         <!-- Registration Form -->
         <form class="space-y-5" on:submit|preventDefault={handleRegister}>
+            {#if error}
+                <div
+                    class="bg-red-500/10 border border-red-500/20 text-red-500 text-xs py-3 px-4 rounded-xl text-center font-bold animate-shake"
+                >
+                    {error}
+                </div>
+            {/if}
+
             <!-- Full Name -->
             <div class="space-y-2">
                 <label
@@ -212,11 +245,11 @@
             <!-- CTA Button -->
             <div class="pt-6">
                 <button
-                    class="w-full bg-primary text-black font-black py-5 rounded-full shadow-2xl shadow-primary/20 hover:shadow-primary/40 active:scale-[0.98] transition-all text-sm uppercase tracking-[0.2em]"
+                    class="w-full bg-primary text-black font-black py-5 rounded-full shadow-2xl shadow-primary/20 hover:shadow-primary/40 active:scale-[0.98] transition-all text-sm uppercase tracking-[0.2em] disabled:opacity-50 disabled:pointer-events-none"
                     type="submit"
-                    disabled={!agreeTerms}
+                    disabled={!agreeTerms || loading}
                 >
-                    Create Account
+                    {loading ? "Creating Account..." : "Create Account"}
                 </button>
             </div>
         </form>

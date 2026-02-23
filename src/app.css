@@ -2,6 +2,7 @@
 
 @theme {
   --color-primary: #D4AF37;
+  --color-primary-light: #F9E498;
   --color-accent-mint: #00ffa3;
   --color-background-light: #f6f6f8;
   --color-background-dark: #0a0a0f;
@@ -50,6 +51,30 @@
 
 .fill-1 {
   font-variation-settings: 'FILL' 1 !important;
+}
+
+/* Gold Gradient Classes */
+.gold-gradient-text {
+  background: linear-gradient(to right, #BF953F, #FCF6BA, #B38728, #FBF5B7, #AA771C);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.gold-button {
+  background: linear-gradient(135deg, #BF953F, #AA771C);
+  color: black !important;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(191, 149, 63, 0.3);
+}
+
+.gold-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(191, 149, 63, 0.5);
+  background: linear-gradient(135deg, #FCF6BA, #BF953F);
 }
 
 /* App structure classes based on user suggestion */

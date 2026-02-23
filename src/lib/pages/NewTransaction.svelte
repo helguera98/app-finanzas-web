@@ -1,42 +1,65 @@
 <script>
     import { createEventDispatcher, onMount } from "svelte";
+    import { api } from "../api";
+    import TopHeader from "../components/TopHeader.svelte";
     const dispatch = createEventDispatcher();
 
     export let data = null;
 
     let transactionType = "expense"; // "expense" or "income"
+    let categories = [];
+    let loading = true;
+    let selectedCategoryId = null;
 
-    onMount(() => {
+    onMount(async () => {
         if (data && data.type) {
             transactionType = data.type;
+        }
+
+        try {
+            categories = await api.getCategories();
+            if (categories.length > 0) {
+                selectedCategoryId = categories[0].id;
+            }
+        } catch (e) {
+            console.error("Error loading categories:", e);
+        } finally {
+            loading = false;
         }
     });
 
     let amount = "0.00";
-    let selectedCategory = "Housing";
-    let date = "Today, 24 May 2024";
+    let date = new Date().toISOString().split("T")[0];
     let description = "";
     let isBill = false;
 
-    const categories = [
-        { id: "housing", name: "Housing", icon: "home" },
-        { id: "food", name: "Food", icon: "restaurant" },
-        { id: "transport", name: "Transport", icon: "directions_car" },
-        { id: "leisure", name: "Leisure", icon: "confirmation_number" },
-        { id: "shopping", name: "Shopping", icon: "shopping_bag" },
-    ];
+    async function handleSave() {
+        if (loading) return;
 
-    function handleSave() {
-        // Mock save
-        dispatch("save", {
-            transactionType,
-            amount,
-            selectedCategory,
-            date,
-            description,
-            isBill,
-        });
-        dispatch("navigate", "home");
+        const token = localStorage.getItem("auth_token");
+        console.log(
+            "[NewTransaction] Using token:",
+            token ? "Token present" : "No token found",
+        );
+
+        try {
+            const transactionData = {
+                amount: parseFloat(amount),
+                description:
+                    description ||
+                    (transactionType === "expense" ? "Gasto" : "Ingreso"),
+                date: date,
+                type: transactionType,
+                category_id: selectedCategoryId || null,
+                is_bill: isBill,
+            };
+
+            await api.createTransaction(transactionData);
+            dispatch("navigate", "home");
+        } catch (e) {
+            console.error("[NewTransaction] Save error:", e);
+            alert("Error al guardar transacción: " + e.message);
+        }
     }
 
     function close() {
@@ -74,24 +97,7 @@
         class="relative w-full max-w-md mx-auto my-auto flex flex-col min-h-full py-4"
     >
         <!-- Top App Bar -->
-        <header class="flex items-center p-6 justify-between z-10">
-            <button
-                class="text-slate-400 hover:text-white transition-colors"
-                on:click={close}
-            >
-                <span class="material-symbols-outlined text-2xl">close</span>
-            </button>
-            <h2
-                class="text-slate-100 text-lg font-black tracking-tighter uppercase italic"
-            >
-                {pageTitle}
-            </h2>
-            <button class="text-slate-400 hover:text-white transition-colors">
-                <span class="material-symbols-outlined text-2xl"
-                    >more_horiz</span
-                >
-            </button>
-        </header>
+        <TopHeader title={pageTitle} on:back={close} />
 
         <!-- Dynamic Action Message -->
         <div class="px-6 py-2 z-10 text-center">
@@ -127,36 +133,48 @@
                 >
                     Select Category
                 </h3>
-                <button
-                    class="text-gold text-[10px] font-black uppercase tracking-widest hover:underline"
-                    >View All</button
-                >
             </div>
             <div class="flex gap-5 overflow-x-auto px-8 pb-6 hide-scrollbar">
-                {#each categories as category}
+                {#if loading}
                     <div
-                        class="flex flex-col items-center gap-3 shrink-0 group"
+                        class="text-[10px] uppercase font-black text-slate-700"
                     >
-                        <button
-                            class="size-16 rounded-full border flex items-center justify-center transition-all duration-300 {selectedCategory ===
-                            category.name
-                                ? `${activeBorder} ${activeBg} ${activeColor} shadow-lg`
-                                : 'border-white/5 bg-white/5 text-slate-500 hover:border-white/10'}"
-                            on:click={() => (selectedCategory = category.name)}
-                        >
-                            <span
-                                class="material-symbols-outlined text-2xl group-active:scale-90 transition-transform"
-                                >{category.icon}</span
-                            >
-                        </button>
-                        <span
-                            class="text-[10px] uppercase tracking-widest font-black {selectedCategory ===
-                            category.name
-                                ? activeColor
-                                : 'text-slate-600'}">{category.name}</span
-                        >
+                        Cargando...
                     </div>
-                {/each}
+                {:else}
+                    {#each categories as category}
+                        <div
+                            class="flex flex-col items-center gap-3 shrink-0 group"
+                        >
+                            <button
+                                class="size-16 rounded-full border flex items-center justify-center transition-all duration-300 {selectedCategoryId ===
+                                category.id
+                                    ? `${activeBorder} ${activeBg} ${activeColor} shadow-lg`
+                                    : 'border-white/5 bg-white/5 text-slate-500 hover:border-white/10'}"
+                                on:click={() =>
+                                    (selectedCategoryId = category.id)}
+                            >
+                                <span
+                                    class="material-symbols-outlined text-2xl group-active:scale-90 transition-transform"
+                                    >{category.icon}</span
+                                >
+                            </button>
+                            <span
+                                class="text-[10px] uppercase tracking-widest font-black {selectedCategoryId ===
+                                category.id
+                                    ? activeColor
+                                    : 'text-slate-600'}">{category.name}</span
+                            >
+                        </div>
+                    {/each}
+                    {#if categories.length === 0}
+                        <div
+                            class="text-[10px] uppercase font-black text-slate-600"
+                        >
+                            No hay categorías disponibles
+                        </div>
+                    {/if}
+                {/if}
             </div>
         </div>
 
@@ -179,7 +197,7 @@
                     >
                     <input
                         class="bg-transparent border-none p-0 text-slate-100 font-bold focus:ring-0 text-sm"
-                        type="text"
+                        type="date"
                         bind:value={date}
                     />
                 </div>

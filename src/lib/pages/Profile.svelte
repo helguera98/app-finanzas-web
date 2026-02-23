@@ -1,36 +1,26 @@
 <script>
+    import { createEventDispatcher } from "svelte";
+    import TopHeader from "../components/TopHeader.svelte";
+    export let user = null;
+    const dispatch = createEventDispatcher();
+
     let biometricLogin = true;
     let pushNotifications = false;
 
     const alexAvatar =
         "https://lh3.googleusercontent.com/aida-public/AB6AXuBld12Gl2zoab74PX5dQ2SrlwoGnj_bL3NXcp26ZLxGauf0GEHMnYwAJfqQIcmjubLVQXDxkjfqw3e0mxyRfx8EpFdFjasyapIU4N1wjT_YLEGYE1bXyRs1SFpFxLnu3iZMCpcGpuIEhweHOxIjvxyB5oP1FoYoWXZg5KM460QAlGmtLhIpZ4XMIcwWO8pXs-RFkFEcPR_4yG59GR9PjxFk7e-nZmb7ewat9OW-fmnLEXrLt74JJBL8EVHh7XgUwsybZF2ZqZDncul7";
+
+    function goBack() {
+        dispatch("navigate", { tab: "home" });
+    }
 </script>
 
 <main class="main-content hide-scrollbar bg-background-dark">
-    <!-- Header Navigation -->
-    <header
-        class="sticky top-0 z-50 flex items-center justify-between px-6 py-4 bg-background-dark/80 backdrop-blur-md"
-    >
-        <button
-            class="flex items-center justify-center size-10 rounded-full bg-surface-dark border border-white/5 transition-colors hover:bg-white/5"
-        >
-            <span class="material-symbols-outlined text-slate-100"
-                >arrow_back</span
-            >
-        </button>
-        <h1
-            class="text-lg font-bold tracking-tight text-slate-100 uppercase tracking-widest"
-        >
-            Settings
-        </h1>
-        <button
-            class="flex items-center justify-center size-10 rounded-full bg-surface-dark border border-white/5 transition-colors hover:bg-white/5"
-        >
-            <span class="material-symbols-outlined text-slate-100"
-                >more_horiz</span
-            >
-        </button>
-    </header>
+    <TopHeader
+        title="Profile Settings"
+        on:back={goBack}
+        rightIcon="more_horiz"
+    />
 
     <div class="max-w-lg mx-auto px-6 pb-10">
         <!-- Profile Section -->
@@ -52,12 +42,12 @@
             </div>
             <div class="text-center mt-6">
                 <h2 class="text-2xl font-black text-slate-100 tracking-tight">
-                    Alex Delgado
+                    {user?.full_name || "Premium Member"}
                 </h2>
                 <p
                     class="text-slate-500 text-xs font-bold uppercase tracking-widest mt-2"
                 >
-                    Member since April 2021
+                    {user?.email || "Active Account"}
                 </p>
                 <div class="mt-4 flex items-center justify-center gap-2">
                     <span
@@ -322,6 +312,7 @@
                 <div class="h-px bg-white/5 mx-5"></div>
                 <button
                     class="w-full flex items-center justify-between p-5 hover:bg-red-500/10 transition-colors group"
+                    on:click={() => dispatch("logout")}
                 >
                     <div class="flex items-center gap-4">
                         <div

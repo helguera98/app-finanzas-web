@@ -1,34 +1,13 @@
 <script>
-    import { createEventDispatcher } from "svelte";
+    import { createEventDispatcher, onMount } from "svelte";
     import { fade, fly } from "svelte/transition";
+    import { api } from "../api";
+    import TopHeader from "../components/TopHeader.svelte";
     const dispatch = createEventDispatcher();
 
-    let categories = [
-        {
-            id: 1,
-            name: "Compras Premium",
-            sub: "Luxury Retail, Moda",
-            icon: "shopping_bag",
-        },
-        {
-            id: 2,
-            name: "Alta Cocina",
-            sub: "Restaurantes, Gourmet",
-            icon: "restaurant",
-        },
-        {
-            id: 3,
-            name: "Viajes Exclusivos",
-            sub: "Hoteles, Jet Privado",
-            icon: "flight_takeoff",
-        },
-        {
-            id: 4,
-            name: "Inversiones",
-            sub: "Activos, Oro, Joyas",
-            icon: "diamond",
-        },
-    ];
+    let categories = [];
+    let loading = true;
+    let error = null;
 
     let newCategoryName = "";
     let selectedIcon = "star";
@@ -42,26 +21,57 @@
         "fitness_center",
         "spa",
         "card_giftcard",
+        "restaurant",
+        "shopping_bag",
+        "flight_takeoff",
+        "diamond",
     ];
+
+    onMount(async () => {
+        try {
+            categories = await api.getCategories();
+        } catch (e) {
+            error = "No se pudieron cargar las categorías";
+            console.error(e);
+        } finally {
+            loading = false;
+        }
+    });
 
     function toggleSheet() {
         isSheetOpen = !isSheetOpen;
     }
 
-    function handleCreate() {
+    async function handleCreate() {
         if (!newCategoryName.trim()) return;
 
-        const newCat = {
-            id: Date.now(),
-            name: newCategoryName,
-            sub: "Nueva Categoría",
-            icon: selectedIcon,
-        };
+        try {
+            const newCat = {
+                name: newCategoryName,
+                icon: selectedIcon,
+                color: "#d4af37", // Default gold color
+            };
 
-        categories = [...categories, newCat];
-        newCategoryName = "";
-        selectedIcon = "star";
-        isSheetOpen = false;
+            const savedCat = await api.createCategory(newCat);
+            categories = [...categories, savedCat];
+
+            newCategoryName = "";
+            selectedIcon = "star";
+            isSheetOpen = false;
+        } catch (e) {
+            alert("Error al crear categoría: " + e.message);
+        }
+    }
+
+    async function handleDelete(id) {
+        if (!confirm("¿Eliminar esta categoría?")) return;
+
+        try {
+            await api.deleteCategory(id);
+            categories = categories.filter((c) => c.id !== id);
+        } catch (e) {
+            alert("Error al eliminar: " + e.message);
+        }
     }
 
     function goBack() {
@@ -72,30 +82,11 @@
 <main
     class="main-content flex flex-col relative overflow-hidden bg-background-dark"
 >
-    <!-- Header -->
-    <header
-        class="flex-none sticky top-0 z-20 backdrop-blur-md bg-background-dark/80 border-b border-primary/10 px-6 py-4 flex items-center justify-between"
-    >
-        <button
-            on:click={goBack}
-            class="flex items-center justify-center size-10 rounded-full bg-primary/10 hover:bg-primary/20 transition-colors"
-        >
-            <span class="material-symbols-outlined text-primary"
-                >arrow_back</span
-            >
-        </button>
-        <h1
-            class="text-lg font-bold tracking-tight gold-gradient-text uppercase"
-        >
-            Gestionar Categorías
-        </h1>
-        <button
-            class="flex items-center justify-center size-10 rounded-full bg-primary/10"
-        >
-            <span class="material-symbols-outlined text-primary">more_vert</span
-            >
-        </button>
-    </header>
+    <TopHeader
+        title="Manage Categories"
+        on:back={goBack}
+        rightIcon="more_vert"
+    />
 
     <div
         class="flex-1 px-6 pt-6 pb-40 space-y-8 overflow-y-auto custom-scrollbar"
