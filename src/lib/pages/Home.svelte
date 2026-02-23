@@ -1,6 +1,5 @@
 <script>
     import { createEventDispatcher, onMount } from "svelte";
-    import TopHeader from "../components/TopHeader.svelte";
     import { api } from "../api";
     const dispatch = createEventDispatcher();
 
@@ -50,9 +49,7 @@
     }
 </script>
 
-<main class="main-content hide-scrollbar space-y-4">
-    <TopHeader title="Overview" showBack={false} rightIcon="notifications" />
-
+<div class="space-y-4">
     <div class="px-6 pb-4">
         <div
             class="flex items-center gap-3 mb-6 bg-primary/5 p-4 rounded-2xl border border-primary/10"
@@ -204,4 +201,4 @@
             </div>
         </section>
     </div>
-</main>
+</div>

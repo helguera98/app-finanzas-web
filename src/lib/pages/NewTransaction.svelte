@@ -1,7 +1,6 @@
 <script>
     import { createEventDispatcher, onMount } from "svelte";
     import { api } from "../api";
-    import TopHeader from "../components/TopHeader.svelte";
     const dispatch = createEventDispatcher();
 
     export let data = null;
@@ -97,7 +96,6 @@
         class="relative w-full max-w-md mx-auto my-auto flex flex-col min-h-full py-4"
     >
         <!-- Top App Bar -->
-        <TopHeader title={pageTitle} on:back={close} />
 
         <!-- Dynamic Action Message -->
         <div class="px-6 py-2 z-10 text-center">

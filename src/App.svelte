@@ -13,6 +13,7 @@
   import Categories from "./lib/pages/Categories.svelte";
   import BottomNav from "./lib/components/BottomNav.svelte";
   import Sidebar from "./lib/components/Sidebar.svelte";
+  import TopHeader from "./lib/components/TopHeader.svelte";
 
   import { onMount } from "svelte";
   import { api } from "./lib/api";
@@ -22,6 +23,53 @@
   let isLoggedIn = false;
   let isCheckingAuth = true;
   let user = null;
+
+  // Header configuration mapping
+  const headerConfigs = {
+    home: { title: "Overview", showBack: false, rightIcon: "notifications" },
+    bills: { title: "Recurring Bills", showBack: true, rightIcon: "search" },
+    categories: {
+      title: "Manage Categories",
+      showBack: true,
+      rightIcon: "more_vert",
+    },
+    loans: {
+      title: "Debt Control",
+      showBack: true,
+      rightIcon: "account_circle",
+    },
+    insights: {
+      title: "Financial Insights",
+      showBack: true,
+      rightIcon: "share",
+    },
+    profile: {
+      title: "Profile Settings",
+      showBack: true,
+      rightIcon: "more_horiz",
+    },
+    new_transaction: {
+      title: "New Transaction",
+      showBack: true,
+      rightIcon: "check",
+    },
+    new_bill: {
+      title: "New Recurring Bill",
+      showBack: true,
+      rightIcon: "check",
+    },
+    new_loan: {
+      title: "Register New Loan",
+      showBack: true,
+      rightIcon: "check",
+    },
+  };
+
+  $: currentHeader = headerConfigs[activeTab] || {
+    title: "MoneyOS",
+    showBack: true,
+    rightIcon: null,
+  };
 
   async function fetchUser() {
     console.log("[App] Fetching user profile...");
@@ -82,6 +130,10 @@
       navData = event.detail.data;
     }
   }
+
+  function handleBack() {
+    activeTab = "home";
+  }
 </script>
 
 <div
@@ -94,7 +146,9 @@
     </div>
   {/if}
 
-  <div class="flex-1 flex flex-col min-w-0 bg-background-dark relative">
+  <div
+    class="flex-1 flex flex-col min-w-0 bg-background-dark overflow-hidden relative"
+  >
     {#if isCheckingAuth}
       <div
         class="h-full w-full bg-background-dark flex items-center justify-center"
@@ -117,48 +171,53 @@
         {/if}
       </div>
     {:else}
-      <!-- Protected Routes Shell -->
-      <div class="flex-1 flex flex-col overflow-hidden">
-        <!-- Scrollable Main Content Area -->
-        <main
-          class="flex-1 overflow-y-auto hide-scrollbar bg-background-dark p-0 md:p-6"
-        >
+      <!-- App Shell Header (Fixed) -->
+      <div class="h-16 w-full flex-shrink-0 z-50">
+        <TopHeader
+          title={currentHeader.title}
+          showBack={currentHeader.showBack}
+          rightIcon={currentHeader.rightIcon}
+          on:back={handleBack}
+        />
+      </div>
+
+      <!-- App Shell Main Content (Scrollable) -->
+      <main
+        class="flex-1 overflow-y-auto hide-scrollbar bg-background-dark p-0 md:p-6"
+      >
+        <div class="w-full max-w-5xl mx-auto">
           {#if activeTab === "new_transaction"}
             <NewTransaction on:navigate={handleNavigate} data={navData} />
           {:else if activeTab === "new_bill"}
             <NewBill on:navigate={handleNavigate} />
           {:else if activeTab === "new_loan"}
             <NewLoan on:navigate={handleNavigate} />
-          {:else}
-            <div class="w-full max-w-5xl mx-auto">
-              {#if activeTab === "home"}
-                <Home on:navigate={handleNavigate} {user} />
-              {:else if activeTab === "bills"}
-                <Bills on:navigate={handleNavigate} />
-              {:else if activeTab === "categories"}
-                <Categories on:navigate={handleNavigate} />
-              {:else if activeTab === "loans"}
-                <Loans on:navigate={handleNavigate} />
-              {:else if activeTab === "insights"}
-                <Insights on:navigate={handleNavigate} />
-              {:else if activeTab === "profile"}
-                <Profile
-                  on:navigate={handleNavigate}
-                  on:logout={handleLogout}
-                  {user}
-                />
-              {/if}
-            </div>
+          {:else if activeTab === "home"}
+            <Home on:navigate={handleNavigate} {user} />
+          {:else if activeTab === "bills"}
+            <Bills on:navigate={handleNavigate} />
+          {:else if activeTab === "categories"}
+            <Categories on:navigate={handleNavigate} />
+          {:else if activeTab === "loans"}
+            <Loans on:navigate={handleNavigate} />
+          {:else if activeTab === "insights"}
+            <Insights on:navigate={handleNavigate} />
+          {:else if activeTab === "profile"}
+            <Profile
+              on:navigate={handleNavigate}
+              on:logout={handleLogout}
+              {user}
+            />
           {/if}
-        </main>
+        </div>
+      </main>
 
-        <!-- Mobile Bottom Nav -->
-        {#if ["home", "bills", "categories", "loans", "insights", "profile"].includes(activeTab)}
-          <div class="md:hidden">
-            <BottomNav bind:activeTab />
-          </div>
-        {/if}
-      </div>
+      <!-- App Shell Footer (Fixed Mobile Nav) -->
+      {#if ["home", "bills", "categories", "loans", "insights", "profile"].includes(activeTab)}
+        <div class="h-16 w-full flex-shrink-0 md:hidden z-50">
+          <BottomNav bind:activeTab />
+        </div>
+      {/if}
     {/if}
   </div>
 </div>

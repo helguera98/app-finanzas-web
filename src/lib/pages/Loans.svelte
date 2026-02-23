@@ -1,7 +1,6 @@
 <script>
     import { createEventDispatcher, onMount } from "svelte";
     import { api } from "../api";
-    import TopHeader from "../components/TopHeader.svelte";
     const dispatch = createEventDispatcher();
 
     let loans = [];
@@ -158,13 +157,7 @@
     }
 </script>
 
-<main class="main-content hide-scrollbar bg-background-dark">
-    <TopHeader
-        title="Debt Control"
-        on:back={goBack}
-        rightIcon="account_circle"
-    />
-
+<div>
     <div class="max-w-lg mx-auto w-full pb-10">
         <section class="p-6">
             <div class="flex justify-between items-end mb-6">
@@ -495,4 +488,4 @@
     >
         <span class="material-symbols-outlined text-3xl font-bold">add</span>
     </button>
-</main>
+</div>

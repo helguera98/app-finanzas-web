@@ -1,7 +1,6 @@
 <script>
     import { createEventDispatcher, onMount } from "svelte";
     import { api } from "../api";
-    import TopHeader from "../components/TopHeader.svelte";
     const dispatch = createEventDispatcher();
 
     let loading = false;
@@ -49,8 +48,6 @@
 <div
     class="new-loan-page bg-background-dark font-display text-slate-100 h-[100dvh] w-full flex flex-col relative overflow-y-auto hide-scrollbar"
 >
-    <TopHeader title="Add New Debt" on:back={close} />
-
     <main
         class="flex-1 max-w-md mx-auto w-full px-6 py-8 flex flex-col gap-8 pb-32"
     >

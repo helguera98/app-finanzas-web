@@ -1,7 +1,6 @@
 <script>
     import { createEventDispatcher, onMount } from "svelte";
     import { api } from "../api";
-    import TopHeader from "../components/TopHeader.svelte";
     const dispatch = createEventDispatcher();
 
     let bills = [];
@@ -30,9 +29,7 @@
     }
 </script>
 
-<main class="main-content hide-scrollbar bg-background-dark">
-    <TopHeader title="Recurring Bills" on:back={goBack} rightIcon="search" />
-
+<div>
     <div class="max-w-2xl mx-auto pb-10">
         {#if loading}
             <div class="p-20 text-center">
@@ -145,4 +142,4 @@
     >
         <span class="material-symbols-outlined text-3xl font-bold">add</span>
     </button>
-</main>
+</div>

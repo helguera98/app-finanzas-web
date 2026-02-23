@@ -1,6 +1,5 @@
 <script>
     import { createEventDispatcher } from "svelte";
-    import TopHeader from "../components/TopHeader.svelte";
     export let user = null;
     const dispatch = createEventDispatcher();
 
@@ -15,13 +14,7 @@
     }
 </script>
 
-<main class="main-content hide-scrollbar bg-background-dark">
-    <TopHeader
-        title="Profile Settings"
-        on:back={goBack}
-        rightIcon="more_horiz"
-    />
-
+<div>
     <div class="max-w-lg mx-auto px-6 pb-10">
         <!-- Profile Section -->
         <section class="flex flex-col items-center mt-8 mb-12">
@@ -331,7 +324,7 @@
             </div>
         </section>
     </div>
-</main>
+</div>
 
 <style>
     .gold-gradient {

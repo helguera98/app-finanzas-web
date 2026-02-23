@@ -1,7 +1,6 @@
 <script>
     import { createEventDispatcher, onMount } from "svelte";
     import { api } from "../api";
-    import TopHeader from "../components/TopHeader.svelte";
     const dispatch = createEventDispatcher();
 
     let loading = false;
@@ -57,8 +56,6 @@
 <div
     class="new-bill-page bg-background-dark font-display text-slate-100 h-[100dvh] w-full flex flex-col relative overflow-y-auto hide-scrollbar"
 >
-    <TopHeader title="Recurring Bill" on:back={close} />
-
     <main class="flex-1 px-6 pb-40">
         <form
             class="space-y-12 max-w-lg mx-auto"

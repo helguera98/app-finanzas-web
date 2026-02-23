@@ -1,7 +1,6 @@
 <script>
     import { createEventDispatcher, onMount } from "svelte";
     import { api } from "../api";
-    import TopHeader from "../components/TopHeader.svelte";
     const dispatch = createEventDispatcher();
 
     let activePeriod = "Mes";
@@ -33,9 +32,7 @@
     // Client-side calculateStats removed as we now use backend analysis
 </script>
 
-<main class="main-content hide-scrollbar bg-background-dark">
-    <TopHeader title="Financial Insights" on:back={goBack} rightIcon="share" />
-
+<div>
     <div class="px-6 space-y-8 pb-10 max-w-lg mx-auto">
         <!-- Time Period Selector -->
         <div
@@ -261,7 +258,7 @@
             </section>
         {/if}
     </div>
-</main>
+</div>
 
 <style>
     .gold-gradient-text {

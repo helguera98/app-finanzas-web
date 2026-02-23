@@ -2,7 +2,6 @@
     import { createEventDispatcher, onMount } from "svelte";
     import { fade, fly } from "svelte/transition";
     import { api } from "../api";
-    import TopHeader from "../components/TopHeader.svelte";
     const dispatch = createEventDispatcher();
 
     let categories = [];
@@ -79,18 +78,8 @@
     }
 </script>
 
-<main
-    class="main-content flex flex-col relative overflow-hidden bg-background-dark"
->
-    <TopHeader
-        title="Manage Categories"
-        on:back={goBack}
-        rightIcon="more_vert"
-    />
-
-    <div
-        class="flex-1 px-6 pt-6 pb-40 space-y-8 overflow-y-auto custom-scrollbar"
-    >
+<div class="relative">
+    <div class="px-6 pt-6 pb-40 space-y-8">
         <!-- Existing Categories Section -->
         <section>
             <div class="flex items-center justify-between mb-4">
@@ -219,7 +208,7 @@
             </div>
         </section>
     {/if}
-</main>
+</div>
 
 <style>
     .gold-gradient-text {
