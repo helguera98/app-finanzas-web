@@ -137,7 +137,7 @@
 </script>
 
 <div
-  class="h-screen w-full flex overflow-hidden bg-[#05050a] font-display text-slate-100"
+  class="h-[100dvh] w-full flex overflow-hidden bg-[#05050a] font-display text-slate-100"
 >
   {#if isLoggedIn && !["landing", "login", "register"].includes(activeTab)}
     <!-- Desktop Sidebar (Hidden on mobile) -->
@@ -214,7 +214,9 @@
 
       <!-- App Shell Footer (Fixed Mobile Nav) -->
       {#if ["home", "bills", "categories", "loans", "insights", "profile"].includes(activeTab)}
-        <div class="h-16 w-full flex-shrink-0 md:hidden z-50">
+        <div
+          class="h-16 w-full flex-shrink-0 md:hidden z-50 pb-[env(safe-area-inset-bottom)]"
+        >
           <BottomNav bind:activeTab />
         </div>
       {/if}
