@@ -12,6 +12,7 @@
   import NewLoan from "./lib/pages/NewLoan.svelte";
   import Categories from "./lib/pages/Categories.svelte";
   import BottomNav from "./lib/components/BottomNav.svelte";
+  import Sidebar from "./lib/components/Sidebar.svelte";
 
   import { onMount } from "svelte";
   import { api } from "./lib/api";
@@ -84,21 +85,16 @@
 </script>
 
 <div
-  class="min-h-screen bg-[#05050a] flex justify-center items-center font-display overflow-hidden"
+  class="h-screen w-full flex overflow-hidden bg-[#05050a] font-display text-slate-100"
 >
-  <!-- Desktop Decorative Background -->
-  <div class="fixed inset-0 pointer-events-none opacity-20">
-    <div
-      class="absolute top-[-10%] left-[-10%] size-[40%] bg-primary blur-[120px] rounded-full"
-    ></div>
-    <div
-      class="absolute bottom-[-10%] right-[-10%] size-[40%] bg-accent-mint blur-[120px] rounded-full"
-    ></div>
-  </div>
+  {#if isLoggedIn && !["landing", "login", "register"].includes(activeTab)}
+    <!-- Desktop Sidebar (Hidden on mobile) -->
+    <div class="hidden md:block">
+      <Sidebar {activeTab} on:navigate={handleNavigate} />
+    </div>
+  {/if}
 
-  <div
-    class="mobile-frame w-full h-screen max-w-[480px] bg-background-dark relative shadow-[0_0_100px_rgba(0,0,0,0.8)] overflow-hidden flex flex-col"
-  >
+  <div class="flex-1 flex flex-col min-w-0 bg-background-dark relative">
     {#if isCheckingAuth}
       <div
         class="h-full w-full bg-background-dark flex items-center justify-center"
@@ -108,7 +104,7 @@
         ></div>
       </div>
     {:else if !isLoggedIn}
-      <div class="flex-1 overflow-y-auto hide-scrollbar">
+      <div class="flex-1 overflow-y-auto bg-background-dark hide-scrollbar">
         {#if activeTab === "landing"}
           <Landing on:navigate={handleNavigate} />
         {:else if activeTab === "register"}
@@ -121,40 +117,48 @@
         {/if}
       </div>
     {:else}
-      <!-- Protected Routes -->
-      <div class="flex-1 overflow-y-auto hide-scrollbar">
-        {#if activeTab === "new_transaction"}
-          <NewTransaction on:navigate={handleNavigate} data={navData} />
-        {:else if activeTab === "new_bill"}
-          <NewBill on:navigate={handleNavigate} />
-        {:else if activeTab === "new_loan"}
-          <NewLoan on:navigate={handleNavigate} />
-        {:else}
-          <div class="app-container text-slate-100">
-            {#if activeTab === "home"}
-              <Home on:navigate={handleNavigate} {user} />
-            {:else if activeTab === "bills"}
-              <Bills on:navigate={handleNavigate} />
-            {:else if activeTab === "categories"}
-              <Categories on:navigate={handleNavigate} />
-            {:else if activeTab === "loans"}
-              <Loans on:navigate={handleNavigate} />
-            {:else if activeTab === "insights"}
-              <Insights on:navigate={handleNavigate} />
-            {:else if activeTab === "profile"}
-              <Profile
-                on:navigate={handleNavigate}
-                on:logout={handleLogout}
-                {user}
-              />
-            {/if}
+      <!-- Protected Routes Shell -->
+      <div class="flex-1 flex flex-col overflow-hidden">
+        <!-- Scrollable Main Content Area -->
+        <main
+          class="flex-1 overflow-y-auto hide-scrollbar bg-background-dark p-0 md:p-6"
+        >
+          {#if activeTab === "new_transaction"}
+            <NewTransaction on:navigate={handleNavigate} data={navData} />
+          {:else if activeTab === "new_bill"}
+            <NewBill on:navigate={handleNavigate} />
+          {:else if activeTab === "new_loan"}
+            <NewLoan on:navigate={handleNavigate} />
+          {:else}
+            <div class="w-full max-w-5xl mx-auto">
+              {#if activeTab === "home"}
+                <Home on:navigate={handleNavigate} {user} />
+              {:else if activeTab === "bills"}
+                <Bills on:navigate={handleNavigate} />
+              {:else if activeTab === "categories"}
+                <Categories on:navigate={handleNavigate} />
+              {:else if activeTab === "loans"}
+                <Loans on:navigate={handleNavigate} />
+              {:else if activeTab === "insights"}
+                <Insights on:navigate={handleNavigate} />
+              {:else if activeTab === "profile"}
+                <Profile
+                  on:navigate={handleNavigate}
+                  on:logout={handleLogout}
+                  {user}
+                />
+              {/if}
+            </div>
+          {/if}
+        </main>
+
+        <!-- Mobile Bottom Nav -->
+        {#if ["home", "bills", "categories", "loans", "insights", "profile"].includes(activeTab)}
+          <div class="md:hidden">
+            <BottomNav bind:activeTab />
           </div>
         {/if}
       </div>
-
-      {#if ["home", "bills", "categories", "loans", "insights", "profile"].includes(activeTab)}
-        <BottomNav bind:activeTab />
-      {/if}
     {/if}
   </div>
 </div>
@@ -169,10 +173,5 @@
   }
   :global(.fill-1) {
     font-variation-settings: "FILL" 1 !important;
-  }
-
-  .mobile-frame {
-    /* Ensure height is correct for PWA standalone */
-    height: 100dvh;
   }
 </style>

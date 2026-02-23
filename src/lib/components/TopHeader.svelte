@@ -23,7 +23,7 @@
 </script>
 
 <header
-    class="sticky top-0 z-50 w-full h-20 flex items-center justify-between px-6 bg-background-dark/80 backdrop-blur-xl border-b border-primary/5"
+    class="sticky top-0 z-50 w-full h-16 flex items-center justify-between px-6 bg-background-dark/80 backdrop-blur-xl border-b border-primary/5"
 >
     <!-- Left Action -->
     <div class="flex-1 flex items-center">

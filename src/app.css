@@ -86,8 +86,8 @@
 
 .main-content {
   flex: 1;
-  overflow-y: auto;
 }
+
 
 .bottom-nav-container {
   height: 85px;
