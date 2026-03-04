@@ -6,6 +6,8 @@
     export let showBack = true;
     export let rightIcon = ""; // e.g., "share", "more_vert", "notifications"
     export let rightAction = null;
+    export let disabled = false;
+    export let loading = false;
 
     function goBack() {
         if (showBack) {
@@ -14,6 +16,7 @@
     }
 
     function handleRightClick() {
+        if (disabled || loading) return;
         if (rightAction) {
             rightAction();
         } else {
@@ -43,8 +46,10 @@
     </div>
 
     <!-- Center Title -->
-    <div class="flex-[2] flex justify-center">
-        <h1 class="text-[11px] font-black uppercase tracking-[0.3em] gold-text">
+    <div class="flex-[2] flex justify-center overflow-hidden">
+        <h1
+            class="text-[10px] sm:text-[11px] font-black uppercase tracking-[0.3em] gold-text truncate px-2"
+        >
             {title}
         </h1>
     </div>
@@ -54,12 +59,24 @@
         {#if rightIcon}
             <button
                 on:click={handleRightClick}
-                class="size-10 flex items-center justify-center rounded-full bg-slate-900/50 border border-slate-800 hover:border-primary/40 hover:bg-primary/10 transition-all group"
+                disabled={disabled || loading}
+                class="size-10 flex items-center justify-center rounded-full border transition-all group relative overflow-hidden
+                {disabled || loading
+                    ? 'border-slate-800 bg-slate-900/20 opacity-40 cursor-not-allowed'
+                    : 'bg-slate-900/50 border-slate-800 hover:border-primary/40 hover:bg-primary/10'}"
             >
-                <span
-                    class="material-symbols-outlined text-xl text-slate-400 group-hover:text-primary transition-colors"
-                    >{rightIcon}</span
-                >
+                {#if loading}
+                    <div
+                        class="size-4 border-2 border-primary/30 border-t-primary rounded-full animate-spin"
+                    ></div>
+                {:else}
+                    <span
+                        class="material-symbols-outlined text-xl {disabled
+                            ? 'text-slate-600'
+                            : 'text-slate-400 group-hover:text-primary'} transition-colors"
+                        >{rightIcon}</span
+                    >
+                {/if}
             </button>
         {:else}
             <div class="size-10"></div>

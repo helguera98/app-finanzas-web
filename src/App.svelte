@@ -14,9 +14,8 @@
   import BottomNav from "./lib/components/BottomNav.svelte";
   import Sidebar from "./lib/components/Sidebar.svelte";
   import TopHeader from "./lib/components/TopHeader.svelte";
-
-  import { onMount } from "svelte";
-  import { api } from "./lib/api";
+  import Toast from "./lib/components/Toast.svelte";
+  import { headerStore, setHeader } from "./lib/stores/headerStore";
 
   let activeTab = "landing";
   let navData = null;
@@ -24,7 +23,7 @@
   let isCheckingAuth = true;
   let user = null;
 
-  // Header configuration mapping
+  // Initial Header configuration mapping
   const headerConfigs = {
     home: { title: "Overview", showBack: false, rightIcon: "notifications" },
     bills: { title: "Recurring Bills", showBack: true, rightIcon: "search" },
@@ -65,13 +64,15 @@
     },
   };
 
-  $: currentHeader = headerConfigs[activeTab] || {
-    title: "MoneyOS",
-    showBack: true,
-    rightIcon: null,
-  };
+  // Update header store whenever activeTab changes
+  $: {
+    if (headerConfigs[activeTab]) {
+      setHeader(headerConfigs[activeTab]);
+    }
+  }
 
   async function fetchUser() {
+    // ... (rest of search target)
     console.log("[App] Fetching user profile...");
     try {
       const userData = await api.getMe();
@@ -174,9 +175,12 @@
       <!-- App Shell Header (Fixed) -->
       <div class="h-16 w-full flex-shrink-0 z-50">
         <TopHeader
-          title={currentHeader.title}
-          showBack={currentHeader.showBack}
-          rightIcon={currentHeader.rightIcon}
+          title={$headerStore.title}
+          showBack={$headerStore.showBack}
+          rightIcon={$headerStore.rightIcon}
+          rightAction={$headerStore.rightAction}
+          disabled={$headerStore.rightDisabled}
+          loading={$headerStore.loading}
           on:back={handleBack}
         />
       </div>
@@ -222,6 +226,7 @@
       {/if}
     {/if}
   </div>
+  <Toast />
 </div>
 
 <style>
