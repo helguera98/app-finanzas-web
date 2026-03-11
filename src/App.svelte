@@ -15,6 +15,8 @@
   import Sidebar from "./lib/components/Sidebar.svelte";
   import TopHeader from "./lib/components/TopHeader.svelte";
   import Toast from "./lib/components/Toast.svelte";
+  import { onMount } from "svelte";
+  import { api } from "./lib/api";
   import { headerStore, setHeader } from "./lib/stores/headerStore";
 
   let activeTab = "landing";
